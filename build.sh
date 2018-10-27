@@ -7,14 +7,14 @@ TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR:-"."}
 
 echo "Building linux binary: thanos-inspect with env variables:"
 env | grep GO
-go build -ldflags='-s -w' -v -o $TRAVIS_BUILD_DIR/thanos-inspect
+go build -ldflags='-s -w' -v -o $TRAVIS_BUILD_DIR/thanos-inspect cmd/main.go
 
 export GOOS=windows
 export GOARCH=amd64
 
 echo "Building windows binary: kubectx.exe with env variables:"
 env | grep GO
-go build -ldflags='-s -w' -v -o $TRAVIS_BUILD_DIR/thanos-inspect.exe
+go build -ldflags='-s -w' -v -o $TRAVIS_BUILD_DIR/thanos-inspect.exe cmd/main.go
 
 echo "Downloading upx"
 cd $TRAVIS_BUILD_DIR

@@ -31,6 +31,6 @@ require (
 	golang.org/x/net v0.0.0-20181023162649-9b4f9f5ad519 // indirect
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
 	golang.org/x/sys v0.0.0-20181026203630-95b1ffbd15a5 // indirect
-	golang.org/x/text v0.3.0 // indirect
+	golang.org/x/text v0.3.0
 	gopkg.in/ini.v1 v1.39.0 // indirect
 )
