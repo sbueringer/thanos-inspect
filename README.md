@@ -1,5 +1,11 @@
 
+# Thanos inspect
 
-* read from s3/minio-config
-* use default/specified bucket
-* get all metadata jsons and print content
+# Installation 
+
+## Installation via go get
+
+Just execute the following and make sure `$GOPATH/bin` is in your `$PATH`:
+````
+go get github.com/sbueringer/thanos-inspect/cmd/thanos-inspect
+````

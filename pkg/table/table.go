@@ -1,4 +1,4 @@
-package thanos
+package table
 
 import (
 	"bytes"

@@ -1,4 +1,4 @@
-package main
+package thanos_inspect
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/improbable-eng/thanos/pkg/block"
 	"github.com/minio/minio-go"
-	"github.com/sbueringer/thanos-inspect/pkg/thanos"
+	"github.com/sbueringer/thanos-inspect/pkg/table"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"io/ioutil"
@@ -137,7 +137,7 @@ func printTable(blockMetas []*block.Meta) error {
 	}
 
 
-	output, err := thanos.ConvertToTable(thanos.Table{Header: header, Lines: lines, SortIndices: []int{1, 2}, Output: "markdown"})
+	output, err := table.ConvertToTable(table.Table{Header: header, Lines: lines, SortIndices: []int{1, 2}, Output: "markdown"})
 	if err != nil {
 		return err
 	}
