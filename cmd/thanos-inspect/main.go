@@ -1,4 +1,4 @@
-package thanos_inspect
+package main
 
 import (
 	"encoding/json"
