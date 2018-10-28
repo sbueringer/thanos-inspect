@@ -20,6 +20,9 @@ var (
 	overwriteURL = flag.String("overwrite-url", "localhost:9000", "minio-style config file")
 	region       = flag.String("region", "c01", "region to inspect")
 	bucket       = flag.String("bucket", "prometheus", "bucket to inspect")
+
+	replica = flag.String("replica", "", "filter by replica")
+	sortBy  = flag.String("sort-by", "FROM,UNTIL", "sort by columns")
 )
 
 func main() {
@@ -114,33 +117,64 @@ func downloadMetadata(c *config) ([]*block.Meta, error) {
 
 func printTable(blockMetas []*block.Meta) error {
 
-	header := []string{"ULID", "From", "UNTIL", "~Size", "#Series", "#Samples", "#Chunks", "COMP-LEVEL","REPLICA","RESOLUTION","SOURCE"}
+	header := []string{"ULID", "FROM", "UNTIL", "RANGE", "UNTIL-COMP", "~SIZE", "#SERIES", "#SAMPLES", "#CHUNKS", "COMP-LEVEL", "REPLICA", "RESOLUTION", "SOURCE"}
 
 	var lines [][]string
 	p := message.NewPrinter(language.English)
 
 	for _, blockMeta := range blockMetas {
+		if *replica != "" && *replica != blockMeta.Thanos.Labels["replica"] {
+			continue
+		}
+
 		var line []string
 		line = append(line, blockMeta.ULID.String())
-		line = append(line, time.Unix(blockMeta.MinTime/1000, 0).Format(time.RFC1123))
-		line = append(line, time.Unix(blockMeta.MaxTime/1000, 0).Format(time.RFC1123))
+		line = append(line, time.Unix(blockMeta.MinTime/1000, 0).Format("02-01-2006 15:04:05"))
+		line = append(line, time.Unix(blockMeta.MaxTime/1000, 0).Format("02-01-2006 15:04:05"))
+		timeRange := time.Duration((blockMeta.MaxTime - blockMeta.MinTime) * 1000 * 1000)
+		line = append(line, timeRange.String())
+		untilComp := "-"
+		if blockMeta.Thanos.Downsample.Resolution == 0 { // data currently raw, downsample if range >= 40 hours
+			untilComp = (time.Duration(40*60*60*1000*time.Millisecond) - timeRange).String()
+		}
+		if blockMeta.Thanos.Downsample.Resolution == 5*60*1000 { // data currently 5m resolution, downsample if range >= 10 days
+			untilComp = (time.Duration(10*24*60*60*1000*time.Millisecond) - timeRange).String()
+		}
+		line = append(line, untilComp)
 		line = append(line, p.Sprintf("%0.2fMiB", (float64(blockMeta.Stats.NumSamples)*1.07)/(1024*1024)))
-		line = append(line, p.Sprintf("%d",blockMeta.Stats.NumSeries))
-		line = append(line, p.Sprintf("%d",blockMeta.Stats.NumSamples))
-		line = append(line, p.Sprintf("%d",blockMeta.Stats.NumChunks))
-		line = append(line, p.Sprintf("%d",blockMeta.Compaction.Level))
+		line = append(line, p.Sprintf("%d", blockMeta.Stats.NumSeries))
+		line = append(line, p.Sprintf("%d", blockMeta.Stats.NumSamples))
+		line = append(line, p.Sprintf("%d", blockMeta.Stats.NumChunks))
+		line = append(line, p.Sprintf("%d", blockMeta.Compaction.Level))
 		line = append(line, blockMeta.Thanos.Labels["replica"])
-		line = append(line, time.Duration(blockMeta.Thanos.Downsample.Resolution*1000000).String())
+		line = append(line, time.Duration(blockMeta.Thanos.Downsample.Resolution * 1000000).String())
 		line = append(line, string(blockMeta.Thanos.Source))
 
 		lines = append(lines, line)
 	}
 
+	var sortByColNum []int
+	for _, col := range strings.Split(*sortBy, ",") {
+		index := getIndex(header, col)
+		if index == -1 {
+			return fmt.Errorf("column %s not found", col)
+		}
+		sortByColNum = append(sortByColNum, index)
+	}
 
-	output, err := table.ConvertToTable(table.Table{Header: header, Lines: lines, SortIndices: []int{1, 2}, Output: "markdown"})
+	output, err := table.ConvertToTable(table.Table{Header: header, Lines: lines, SortIndices: sortByColNum, Output: "markdown"})
 	if err != nil {
 		return err
 	}
 	fmt.Printf(output)
 	return nil
+}
+
+func getIndex(cols []string, s string) int {
+	for i, col := range cols {
+		if col == s {
+			return i
+		}
+	}
+	return -1
 }
