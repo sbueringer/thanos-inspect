@@ -101,13 +101,13 @@ func downloadMetadata(c *config) ([]*block.Meta, error) {
 		if strings.Contains(objInfo.Key, "meta.json") {
 			obj, err := client.GetObject(*bucket, objInfo.Key, minio.GetObjectOptions{})
 			if err != nil {
-				return nil, err
+				fmt.Printf("ERROR: cannot download block: %s\n", objInfo.Key)
 			}
 
 			blockMeta := &block.Meta{}
 			err = json.NewDecoder(obj).Decode(blockMeta)
 			if err != nil {
-				return nil, err
+				fmt.Printf("ERROR: cannot download block: %s\n", objInfo.Key)
 			}
 			blockMetas = append(blockMetas, blockMeta)
 		}
@@ -117,7 +117,7 @@ func downloadMetadata(c *config) ([]*block.Meta, error) {
 
 func printTable(blockMetas []*block.Meta) error {
 
-	header := []string{"ULID", "FROM", "UNTIL", "RANGE", "UNTIL-COMP", "~SIZE", "#SERIES", "#SAMPLES", "#CHUNKS", "COMP-LEVEL", "REPLICA", "RESOLUTION", "SOURCE"}
+	header := []string{"ULID", "FROM", "UNTIL", "RANGE", "UNTIL-COMP", "~SIZE", "#SERIES", "#SAMPLES", "#CHUNKS", "COMP-LEVEL", "COMP-FAILED", "REPLICA", "RESOLUTION", "SOURCE"}
 
 	var lines [][]string
 	p := message.NewPrinter(language.English)
@@ -146,6 +146,7 @@ func printTable(blockMetas []*block.Meta) error {
 		line = append(line, p.Sprintf("%d", blockMeta.Stats.NumSamples))
 		line = append(line, p.Sprintf("%d", blockMeta.Stats.NumChunks))
 		line = append(line, p.Sprintf("%d", blockMeta.Compaction.Level))
+		line = append(line, p.Sprintf("%t", blockMeta.Compaction.Failed))
 		line = append(line, blockMeta.Thanos.Labels["replica"])
 		line = append(line, time.Duration(blockMeta.Thanos.Downsample.Resolution * 1000000).String())
 		line = append(line, string(blockMeta.Thanos.Source))
