@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -24,9 +25,18 @@ func (t Table) Less(i, j int) bool {
 		if t.Lines[i][index] == t.Lines[j][index] {
 			continue
 		}
-		return t.Lines[i][index] < t.Lines[j][index]
+		return compare(t.Lines[i][index],t.Lines[j][index])
 	}
-	return t.Lines[i][0] < t.Lines[j][0]
+	return compare(t.Lines[i][0],t.Lines[j][0])
+}
+
+func compare(s1, s2 string) bool {
+	s1Time, s1Err := time.Parse("02-01-2006 15:04:05", s1)
+	s2Time, s2Err := time.Parse("02-01-2006 15:04:05", s2)
+	if s1Err != nil  || s2Err != nil {
+		return s1 < s2
+	}
+	return s1Time.Before(s2Time)
 }
 
 func ConvertToTable(t Table) (string, error) {
