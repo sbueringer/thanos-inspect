@@ -1,4 +1,6 @@
 
+DEPRECATED in favor of `thanos bucket ls`  +> https://github.com/improbable-eng/thanos/pull/699
+
 # Thanos inspect
 
 # Installation 
